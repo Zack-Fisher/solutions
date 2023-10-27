@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="dcterms.date" content="2023-06-17" />
+  <title>custom_kernel</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">custom_kernel</h1>
+<p class="date">June 17, 2023</p>
+</header>
+<h1 id="using-a-custom-version-of-the-linux-kernel">using a custom
+version of the linux kernel</h1>
+<h2 id="important-choosing-a-name-for-the-build">important: choosing a
+name for the build</h2>
+<p>the easiest thing to do is to use the truncated version as the name.
+eg bzImage -&gt; bzImage-640 if we’re making linux 6.4.0.</p>
+<p>grub will identify the kernel by the name in the selector.</p>
+<p>all files should be appended with the same name!!! we need the
+automatic mkinitcpio stuff to play nice, or we have to play around with
+the configs.</p>
+<h2 id="building-modules">building modules</h2>
+<p>we need kernel modules to insert into the initramfs. so, we need to
+build them.</p>
+<blockquote>
+<p>Build the kernel modules for the initramfs:</p>
+<p>-Return to the kernel source code directory.</p>
+<p>-Run <code>make prepare</code> to prepare the build environment.</p>
+<p>-Run <code>make modules_prepare</code> to ensure the necessary
+dependencies are available.</p>
+<p>-Run <code>make modules</code> to build the kernel modules. This will
+build all the modules</p>
+<p>-specified in the initramfs_list file.</p>
+</blockquote>
+<h1 id="overview">overview</h1>
+<p>after compilation, we need to handle three files: System.map,
+vmlinuz/bzImage, and the initramfs image.</p>
+<p>System.map is a kernel symbol table used for resolution and
+debugging. vmlinuz is the kernel image itself.</p>
+<p>when moving the files over, choose a common name for the linux kernel
+version you’re recompiling. then, name everything <filename> -&gt;
+<filename>-<kernel_name> so that you can easily replace and point
+mkinitcpio and other stuff to the proper versions of the kernel
+image.</p>
+<h2 id="system.map">System.map</h2>
+<p>is this necessary?</p>
+<p>gpt says:</p>
+<blockquote>
+<p>No, the Linux kernel typically requires a System.map file to boot
+successfully. The System.map file contains the symbol table for the
+kernel, which is essential for resolving memory addresses and debugging
+purposes.</p>
+</blockquote>
+<p>so i guess not.</p>
+<p>after make install in the kernel directory, the System.map file
+should be in the pwd.</p>
+<p>copy that over as System.map-custom in /boot, or something.</p>
+<h2 id="initramfs">initramfs</h2>
+<p>more details on initramfs in
+https://www.linuxfromscratch.org/blfs/view/svn/postlfs/initramfs.html</p>
+<h3 id="most-important-thing">most important thing:</h3>
+<p>from https://www.youtube.com/watch?v=VVunP3yDgm4</p>
+<p>we can basically skip creating the config file if it doesn’t matter,
+and use all the default system modules. run the command</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mkinitcpio</span> <span class="at">-k</span> <span class="op">&lt;</span>full_version<span class="op">&gt;</span> -g <span class="op">&lt;</span>output_file<span class="op">&gt;</span></span></code></pre></div>
+<h3 id="why-is-mkinitcpio-called-that">why is mkinitcpio called
+that</h3>
+<p>cpio is a file archival format.</p>
+<p>ram images use cpio because:</p>
+<blockquote>
+<p>Ram images, such as initramfs or initrd, use the cpio compression
+format for several reasons: -Simplicity: The cpio format is
+straightforward and relatively easy to work with. It provides a simple
+and efficient way to package files and directories into a single
+archive.</p>
+<p>-Compatibility: The cpio format is widely supported across various
+Unix-like systems, making it a suitable choice for creating ram images
+that need to work on different platforms. The tools and libraries for
+handling cpio archives are commonly available, ensuring compatibility
+across different environments.</p>
+<p>-File preservation: The cpio format preserves file metadata, such as
+permissions, ownership, timestamps, and symbolic links. This is
+important when creating ram images because it allows the initramfs or
+initrd to accurately reflect the file attributes as they should be when
+the system boots.</p>
+<p>-Boot loader support: Many boot loaders, such as GRUB, expect the ram
+image to be in the cpio format. By using cpio compression, the ram image
+can be directly loaded and processed by the boot loader without the need
+for additional decompression steps.</p>
+<p>-Size efficiency: The cpio format provides reasonably efficient
+compression for ram images while still maintaining fast decompression
+speeds. This is important for reducing the size of the ram image, which
+can be crucial in constrained environments or during the boot process,
+where loading and decompression time can impact boot speed.</p>
+</blockquote>
+<h3 id="notes">notes</h3>
+<p>use mkinitcpio on arch to generate an initramfs image from a kernel
+image. the image is loaded to boot and mount the root filesystem to
+/.</p>
+<p>the image can be automatically generated based on the kernel
+compilation, but it is apparently DEPENDENT on the kernel version/build,
+so we need to make it each time as part of the recompilation
+process.</p>
+<p>this is an example /boot:</p>
+<pre><code>zack@zackarchmain ~/Documents/c/linux/arch/x86_64/boot $ ls /boot
+EFI                grub                          vmlinuz
+System.map         initramfs-linux-fallback.img  vmlinuz-custom
+System.map-custom  initramfs-linux.img           vmlinuz-linux
+System.old         syslinux                      vmlinuz.old</code></pre>
+<p>with some custom stuff and normal linux downloads. the linux
+downloads are from the arch repos.</p>
+<h3 id="configuring-the-image">configuring the image</h3>
+<p>here’s an example mkinitcpio.d/custom.preset file use the name of
+your kernel compilation.</p>
+<pre><code># mkinitcpio preset file for the &#39;custom&#39; package
+
+#ALL_config=&quot;/etc/mkinitcpio.conf&quot;
+ALL_kver=&quot;/boot/vmlinuz-custom&quot;
+ALL_microcode=(/boot/*-ucode.img)
+
+PRESETS=(&#39;default&#39; &#39;fallback&#39;)
+
+#default_config=&quot;/etc/mkinitcpio.conf&quot;
+default_image=&quot;/boot/initramfs-custom.img&quot;
+#default_uki=&quot;/efi/EFI/Linux/arch-custom.efi&quot;
+#default_options=&quot;--splash /usr/share/systemd/bootctl/splash-arch.bmp&quot;
+
+#fallback_config=&quot;/etc/mkinitcpio.conf&quot;
+fallback_image=&quot;/boot/initramfs-custom-fallback.img&quot;
+#fallback_uki=&quot;/efi/EFI/Linux/arch-custom-fallback.efi&quot;
+fallback_options=&quot;-S autodetect&quot;</code></pre>
+<h3 id="generating-the-image-setting-up-defaults">generating the image,
+setting up defaults</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> /etc/mkinitcpio.d/linux.preset /etc/mkinitcpio.d/<span class="op">&lt;</span>kernel_name<span class="op">&gt;</span>.preset</span></code></pre></div>
+<p>it’ll read all of the presets from there, we can use this preset to
+generate the ram image.</p>
+<p>just run <code>%s/linux/&lt;kernel_name&gt;/g</code> in the preset
+file, and it should work.</p>
+<p>then, run <code>mkinitcpio -p &lt;kernel_name&gt;</code> to generate
+the image.</p>
+<p>it’ll automatically build the ram image and a fallback image.</p>
+<h3 id="notes-on-ram-images">notes on ram images</h3>
+<p>what’s this about? what’s in a ram image?</p>
+<pre><code>==&gt; Starting build: &#39;6.4.0-rc6-gb6dad5178cea&#39;
+  -&gt; Running build hook: [base]
+  -&gt; Running build hook: [udev]
+  -&gt; Running build hook: [autodetect]
+  -&gt; Running build hook: [modconf]
+  -&gt; Running build hook: [kms]
+  -&gt; Running build hook: [keyboard]
+  -&gt; Running build hook: [keymap]
+  -&gt; Running build hook: [consolefont]
+  -&gt; Running build hook: [block]
+  -&gt; Running build hook: [filesystems]
+  -&gt; Running build hook: [fsck]
+==&gt; WARNING: No modules were added to the image. This is probably not what you want.</code></pre>
+<p>it’s literally all the stuff that gets dumped into the computer’s ram
+at runtime to mount the system. this is basically a minimal linux system
+that gets loaded into ram. it’s like a very very tiny install disk.</p>
+<p>this is probably also why it needs the literal path to the linux
+kernel image, since it’s using that to build the ram image and mount the
+linux filesystem to /.</p>
+<pre><code>690 -rwxr-xr-x  1 root root  68M Jun 17 01:46 initramfs-linux-fallback.img
+689 -rwxr-xr-x  1 root root  16M Jun 17 01:46 initramfs-linux.img</code></pre>
+<p>wow that’s quite small</p>
+<h3 id="modules">modules</h3>
+<p>apparently this works?
+<code>MODULES="module1 module2 module3"</code></p>
+<p>literally loading kernel modules into the ram image.</p>
+<p>it’ll by default load a certain set of modules, more in the fallback
+image.</p>
+<h3 id="fallback">fallback</h3>
+<p>the fallback is bigger, i guess because it’s loading more stuff, just
+in case we don’t have enough. it’s significantly larger, too. (still not
+that big.)</p>
+<h2 id="vmlinuzbzimage">vmlinuz/bzImage</h2>
+<p>this should be in ./arch/<cpu_arch>/boot it’s just a file, needs a
+bootloader to do anything in qemu. actually, trying to run the bzImage
+in qemu-system-x86_64 gives a message that you should be using a
+bootloader. neat.</p>
+<h2 id="getting-grub-to-work-with-it">getting grub to work with it</h2>
+<p>apparently, upon making the configuration, grub will search /boot for
+ram images and kernel images.</p>
+<p>it will generate the bootloader based on this, so i guess guess renew
+the grub config?</p>
+<p><code>sudo grub-mkconfig -o /boot/grub/grub.cfg</code></p>
+<p>from the header of grub.cfg:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># It is automatically generated by grub-mkconfig using templates</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># from /etc/grub.d and settings from /etc/default/grub</span></span></code></pre></div>
+<p>and those grub.d scripts search the /boot directory for all your
+linux images and ram images. so yeah, grub handles all of this stuff
+kindof automatically.</p>
+<p>THIS is why you’re not supposed to modify by hand. you’re expected to
+have the grub.cfg be overwritten.</p>
+<p>modify with the config rules in grub.d</p>
+<p>once this is setup, reboot the system and the grub config should be
+updated and ready. the “<kernel_name>” kernel should be ready to use in
+the loader?</p>
+</body>
+</html>
